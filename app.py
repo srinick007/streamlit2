@@ -1,68 +1,62 @@
-import cv2
 import streamlit as st
-import time
 import tensorflow as tf
+from tensorflow import keras
+from keras.models import load_model
+st.write("Hello There")
+mn=load_model("DeepVisionModel.h5")
+mn.summary()
+
+
+from PIL import Image
 import numpy as np
 
+import cv2
+import time
 
-st.title("SIGNED OR UNSIGNED")
-st.markdown("<h6 style='text-align: right; color: gray;'>~sumesh varadharajan</h6>", unsafe_allow_html=True)
-run = st.checkbox('Click to Run')
+st.title("Webcam Live Feed")
+run = st.checkbox('Run')
 FRAME_WINDOW = st.image([])
 camera = cv2.VideoCapture(0)
-model2 = tf.keras.models.load_model('DeepVisionModel.h5')
 font = cv2.FONT_HERSHEY_SIMPLEX
-image3 = cv2.imread("trial.jpeg",0)
-image3 = cv2.resize(image3,(256,256))
-FRAME_WINDOW.image(image3)
+  
 # org
-org = (80, 224)
+org = (50, 50)
+  
+# fontScale
 fontScale = 1
+   
+# Blue color in BGR
 color = (255, 0, 0)
-thickness = 3
+  
+# Line thickness of 2 px
+thickness = 2
 while run:
-    return_value, frame1 = camera.read()
-    #FRAME_WINDOW.image(frame1)
-    time.sleep(0.001)
+    _, frame = camera.read()
+    image1 = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    image1_b_w = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
+    image1_b_w=cv2.resize(image1_b_w,(256,256))
 
-    return_value, frame2 = camera.read()
-    #FRAME_WINDOW.image(frame2)
-
-    time.sleep(0.001)
-    cv2.imwrite("image1.png", frame1)
-    image1 = cv2.imread("image1.png",0)
-    #image1 = cv2.cvtColor(frame1, cv2.IMREAD_COLOR)
-    #image1 = cv2.imdecode(frame1, cv2.IMREAD_COLOR)
-    #image1 = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    image1 = cv2.resize(image1,(256,256))
-    image1 = np.dstack([image1]*3)
-    cv2.imwrite("image2.png", frame2)
-    image2 = cv2.imread("image2.png",0)
-    #image2 = cv2.cvtColor(frame2, cv2.IMREAD_COLOR)
-    #image2 = cv2.imdecode(frame2, cv2.IMREAD_COLOR)
-    #image2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
-    image2 = cv2.resize(image2,(256,256))
-    image2 = np.dstack([image2]*3)
-
-
-
-
-    absdiff = cv2.absdiff(image1,image2)
+    time.sleep(0.01)
+    
+    _, frame1 = camera.read()
+    image2 = cv2.cvtColor(frame1, cv2.COLOR_BGR2RGB)
+    image2_b_w = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
+    image2_b_w=cv2.resize(image2_b_w,(256,256))
+    absdiff = cv2.absdiff(image1_b_w,image2_b_w)
+    absdiff=np.dstack([absdiff]*3)
     absdiff1 = np.expand_dims(absdiff, axis = 0)
-    val = model2.predict(absdiff1)
-    if val == 0:
-         absdiff = cv2.putText(absdiff, 'Signed', org, font, 
+    pred=mn.predict(absdiff1)
+    if pred==1:
+        absdiff = cv2.putText(absdiff, 'signed', org, font, 
                    fontScale, color, thickness, cv2.LINE_AA)
-         FRAME_WINDOW.image(absdiff)
+        FRAME_WINDOW.image(absdiff)
+        
     else:
-         absdiff = cv2.putText(absdiff, 'Unsigned', org, font, 
+        absdiff = cv2.putText(absdiff, 'Unsigned', org, font, 
                    fontScale, color, thickness, cv2.LINE_AA)
-         FRAME_WINDOW.image(absdiff)
+        FRAME_WINDOW.image(absdiff)
+    
+    
 
 else:
-    st.markdown("<h4 style='text-align: center; color: gray;'>Bye..</h4>", unsafe_allow_html=True)
-
-    
-
-    
-   
+    st.write('Stopped')
